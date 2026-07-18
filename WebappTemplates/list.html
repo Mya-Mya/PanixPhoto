@@ -2,6 +2,10 @@
 <style>
     @import url("https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css");
 
+    a {
+        cursor: pointer;
+    }
+
     :root {
         --n-columns: 2;
     }
@@ -18,19 +22,37 @@
         }
     }
 
-    #media-list {
+    figure {
+        aspect-ratio: 1/1;
+        overflow: hidden;
+    }
+
+    img,
+    video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    table th,
+    table td {
+        vertical-align: middle;
+        padding: 0;
+    }
+
+    #media-grid {
         display: grid;
         grid-template-columns: repeat(var(--n-columns), 1fr);
         gap: var(--pico-border-radius);
         border-radius: var(--pico-border-radius);
     }
 
-    img, video {
-        aspect-ratio: 1/1;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+    .table-media-figure {
+        height: 64px;
+        overflow: hidden;
     }
+
+    .media-checkbox {}
 </style>
 
 <head>
@@ -50,7 +72,6 @@
         {% if directory_items %}
         <section>
             <h2>フォルダ</h2>
-
             <ul>
                 {% for item in directory_items %}
                 <li><a href="/app/{{ (dir_path + '/' if dir_path else '') + item.name }}">{{ item.name }}</a></li>
@@ -62,7 +83,10 @@
         {% if media_items %}
         <section>
             <h2>メディア</h2>
-            <div id="media-list">
+            <article>
+                <button class="outlined" onclick="switchMediaView();">表示切り替え</button>
+            </article>
+            <div id="media-grid">
                 {% for item in media_items %}
                 {% set full_media_path = (dir_path + '/' if dir_path else '') + item.filename %}
                 <figure>
@@ -77,9 +101,117 @@
                 </figure>
                 {% endfor %}
             </div>
+            <div id="media-table" hidden>
+                <article style="position: sticky; top: var(--pico-spacing);">
+                    <b id="show-counter">?</b>件表示中
+                    <b id="selection-counter">0</b>件選択中
+                    <a onclick="selectAllVisible();">全選択</a>
+                    <a onclick="deselectAllVisible();">全て外す</a>
+                </article>
+                <input type="text" placeholder="検索" id="search" oninput="onSearchChange();">
+                <table>
+                    <tbody>
+                        {% for item in media_items %}
+                        {% set full_media_path = (dir_path + '/' if dir_path else '') + item.filename %}
+                        <tr data-filename="{{ item.filename }}">
+                            <td><input type="checkbox" class="media-checkbox"
+                                    onchange="onCheckboxChange('{{ item.filename }}', this.checked);">
+                            </td>
+                            <td>
+                                <figure class="table-media-figure">
+                                    {% if item.type=='Image' %}
+                                    <img src="/api/media/{{ full_media_path }}" loading="lazy">
+                                    {% endif %}
+                                </figure>
+                            </td>
+                            <td>
+                                <a href="/api/media/{{ full_media_path }}" target="_blank">{{ item.filename }}</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </section>
         {% endif %}
     </main>
 </body>
 
 </html>
+
+<script>
+    /**@param{HTMLElement} e */
+    const show = (e) => e.removeAttribute("hidden")
+    /**@param{HTMLElement} e */
+    const hide = (e) => e.setAttribute("hidden", "true")
+
+    const $MediaGrid = document.getElementById("media-grid")
+    const $MediaTable = document.getElementById("media-table")
+    const $SelectAll = document.getElementById("select-all")
+    const $Search = document.getElementById("search")
+    const $ShowCounter = document.getElementById("show-counter")
+    const $SelectionCounter = document.getElementById("selection-counter")
+
+    let switchMediaViewCount = 0
+    const switchMediaView = () => {
+        if (switchMediaViewCount % 2 == 0) {
+            hide($MediaGrid)
+            show($MediaTable)
+        } else {
+            show($MediaGrid)
+            hide($MediaTable)
+        }
+        switchMediaViewCount += 1
+    }
+
+    const selectedFilenames = new Set()
+    const mediaRows = Array.from($MediaTable.querySelectorAll("tr[data-filename]")).map($row => {
+        const $checkbox = $row.querySelector(".media-checkbox")
+        return {
+            $row,
+            $checkbox,
+            filename: $row.getAttribute("data-filename")
+        }
+    })
+    const getMatchedMediaRows = () => {
+        const query = $Search.value
+        return mediaRows.filter(item => item.filename.includes(query))
+    }
+
+    const render = () => {
+        let visibleCount = 0
+        const query = $Search.value
+        mediaRows.forEach(item => {
+            const isMatch = item.filename.includes(query)
+            if (isMatch) {
+                show(item.$row)
+                visibleCount++
+            } else {
+                hide(item.$row)
+            }
+            item.$checkbox.checked = selectedFilenames.has(item.filename)
+        })
+        $ShowCounter.textContent = String(visibleCount)
+        $SelectionCounter.textContent = String(selectedFilenames.size)
+    }
+    const onSearchChange = () => render()
+
+    const onCheckboxChange = (filename, checked) => {
+        if (checked) { selectedFilenames.add(filename) }
+        else { selectedFilenames.delete(filename) }
+        render()
+    }
+
+    const selectAllVisible = () => {
+        getMatchedMediaRows().forEach(item => selectedFilenames.add(item.filename))
+        render()
+    }
+    const deselectAllVisible = () => {
+        getMatchedMediaRows().forEach(item => selectedFilenames.delete(item.filename))
+        render()
+    }
+
+    // Startup
+    render()
+
+</script>
