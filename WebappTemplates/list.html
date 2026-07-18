@@ -1,0 +1,64 @@
+<html lang="ja" prefix="og: http://ogp.me/ns#">
+<style>
+    @import url("https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css");
+
+    :root {
+        --n-columns: 2;
+    }
+
+    @media (min-width: 900px) {
+        :root {
+            --n-columns: 3;
+        }
+    }
+
+    @media (min-width: 1200px) {
+        :root {
+            --n-columns: 4;
+        }
+    }
+
+    main {
+        display: grid;
+        grid-template-columns: repeat(var(--n-columns), 1fr);
+        gap: var(--pico-border-radius);
+        border-radius: var(--pico-border-radius);
+    }
+
+    figure {
+        /* overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center; */
+    }
+    img{
+        aspect-ratio: 1/1;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+</style>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="{{ current_directory }}">
+    <meta property="og:type" content="article">
+    <meta property="og:description" content="">
+    <meta property="og:url" content="">
+    <meta property="og:site_name" content="PanixPhoto">
+    <meta property="og:image" content="">
+    <title>{{ current_directory or 'PanixPhoto' }}</title>
+</head>
+
+<body>
+    <main>
+        {% for src in srcs %}
+        <div>
+            <a href="{{ src }}"><img src="{{ src }}" alt="" loading="lazy"></a>
+        </div>
+        {% endfor %}
+    </main>
+</body>
+
+</html>
