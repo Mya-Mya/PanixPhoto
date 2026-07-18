@@ -4,12 +4,11 @@ from flask import (
     jsonify,
     render_template,
     send_from_directory,
-    redirect,
-    url_for,
 )
 from pathlib import Path
 import uuid
 from argparse import ArgumentParser
+from dataclasses import asdict
 from repository import *
 
 app = Flask(__name__, template_folder="./WebappTemplates")
@@ -33,30 +32,36 @@ def safely_send_file(target: Path):
 
 
 @app.get("/app/", defaults={"dir_path": ""})
-@app.get("/app/<dir_path>")
+@app.get("/app/<path:dir_path>")
 def handle_app_(dir_path: str):
     relative_dir_path = Path(dir_path)
-    items = media_repository.list_items(relative_dir_path)
 
-    srcs = []
+    items = media_repository.list_items(relative_dir_path)
+    directory_items = []
+    media_items = []
     for item in items:
-        if item.type != "Media":
-            continue
-        payload: MediaPayload = item.payload
-        if payload.type != "Image":
-            continue
-        srcs.append("/api/media/" + dir_path + "/" + payload.filename)
+        payload_dict = asdict(item.payload)
+        if item.type=="Directory":
+            directory_items.append(payload_dict)
+        elif item.type=="Media":
+            media_items.append(payload_dict)
+
     return render_template(
-        "list.html", current_directory=relative_dir_path.name, srcs=srcs
+        "list.html",
+        current_directory=relative_dir_path.name,
+        directory_items=directory_items,
+        media_items=media_items,
+        dir_path=dir_path,
     )
 
 
-@app.get("/api/media/<path>")
+@app.get("/api/media/<path:path>")
 def handle_api_media_(path):
+    print(f"{path=}")
     relative_path = Path(path)
     resolved = media_repository.safely_resolve(relative_path)
     if not resolved:
-        return make_error_response(f"パス {path} が見つかりませんでした"), 404
+        return make_error_response(f"パス {path} が見つかりませんでした", 404)
     return safely_send_file(resolved)
 
 

@@ -18,20 +18,14 @@
         }
     }
 
-    main {
+    #media-list {
         display: grid;
         grid-template-columns: repeat(var(--n-columns), 1fr);
         gap: var(--pico-border-radius);
         border-radius: var(--pico-border-radius);
     }
 
-    figure {
-        /* overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center; */
-    }
-    img{
+    img {
         aspect-ratio: 1/1;
         width: 100%;
         height: 100%;
@@ -53,11 +47,38 @@
 
 <body>
     <main>
-        {% for src in srcs %}
-        <div>
-            <a href="{{ src }}"><img src="{{ src }}" alt="" loading="lazy"></a>
-        </div>
-        {% endfor %}
+        {% if directory_items %}
+        <section>
+            <h2>フォルダ</h2>
+
+            <ul>
+                {% for item in directory_items %}
+                <li><a href="/app/{{ (dir_path + '/' if dir_path else '') + item.name }}">{{ item.name }}</a></li>
+                {% endfor %}
+            </ul>
+
+        </section>
+        {% endif %}
+        {% if media_items %}
+        <section>
+            <h2>メディア</h2>
+            <div id="media-list">
+                {% for item in media_items %}
+                {% set full_media_path = (dir_path + '/' if dir_path else '') + item.filename %}
+
+                <a href="/api/media/{{ full_media_path }}">
+                    {% if item.type=='Video' %}
+                    <video src="/api/media/{{ full_media_path }}"></video>
+                    {% endif %}
+                    {% if item.type=='Image' %}
+                    <img src="/api/media/{{ full_media_path }}" alt="{{ item.filename }}" loading="lazy">
+                    {% endif %}
+                </a>
+
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
     </main>
 </body>
 

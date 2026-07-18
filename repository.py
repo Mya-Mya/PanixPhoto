@@ -1,5 +1,5 @@
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Literal
 import datetime
 import shutil
@@ -27,6 +27,8 @@ class Item:
     type: Literal["Directory", "Media"]
     payload: DirectoryPayload | MediaPayload
 
+    def to_dict(self):
+        return {"type": self.type, "payload": asdict(self.payload)}
 
 class MediaRepository:
     def __init__(self, config: dict = dict()) -> None:
@@ -119,7 +121,7 @@ class MediaRepository:
         except Exception:
             return False
 
-    def add_media(self, src: Path, relative_dst_path:Path) -> bool:
+    def add_media(self, src: Path, relative_dst_path: Path) -> bool:
         if not src.exists():
             return False
         ext = Path(relative_dst_path).suffix.lower()
@@ -137,11 +139,11 @@ class MediaRepository:
             return False
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     media_repository = MediaRepository()
     current_directory = Path("./")
     while True:
-        input_content = input(str(current_directory)+" : ")
+        input_content = input(str(current_directory) + " : ")
         if input_content == "exit":
             break
         if input_content == "ls":
