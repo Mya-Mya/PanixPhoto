@@ -4,6 +4,7 @@ from flask import (
     jsonify,
     render_template,
     send_from_directory,
+    redirect
 )
 from pathlib import Path
 import uuid
@@ -30,6 +31,11 @@ def make_error_response(message: str, code: int = 400):
 
 def safely_send_file(target: Path):
     return send_from_directory(target.parent, target.name)
+
+
+@app.get("/")
+def handle_():
+    return redirect("/app/")
 
 
 @app.get("/app/", defaults={"dir_path": ""})
