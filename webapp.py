@@ -9,6 +9,7 @@ from pathlib import Path
 import uuid
 from argparse import ArgumentParser
 from dataclasses import asdict
+import json
 from repository import *
 
 app = Flask(__name__, template_folder="./WebappTemplates")
@@ -87,6 +88,10 @@ def handle_api_upload():
 if __name__ == "__main__":
     parser = ArgumentParser(prog="PanixPhoto Web Server")
     parser.add_argument("--port", type=int, default=8080)
+    parser.add_argument("--config", type=str, default="./config.json")
     args = parser.parse_args()
 
+    config_path = Path(args.config)
+    if config_path.exists():
+        media_repository = MediaRepository(json.loads(config_path.read_text()))
     app.run("0.0.0.0", int(args.port), debug=True)
