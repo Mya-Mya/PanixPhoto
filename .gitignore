@@ -1,0 +1,9 @@
+config.json
+Data/
+UploadTemp/
+
+__pycache__/
+.venv/
+.python-version
+
+.DS_Store
